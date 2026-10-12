@@ -83,6 +83,22 @@
   .error button{margin-top:10px}
   .gb-rules{background:#241f10; border:1px solid #6b5a12; color:#fde68a; border-radius:10px; padding:12px 14px; font-size:12.5px; line-height:1.6; margin-bottom:16px}
   footer{text-align:center; color:var(--muted); font-size:11.5px; padding:24px 10px; border-top:1px solid #1e2a42; margin-top:30px}
+  .match.clic{cursor:pointer}
+  .match.clic:hover{border-color:var(--accent); background:#1a2742}
+  .modal-overlay{position:fixed; inset:0; background:rgba(5,10,20,.78); display:none; align-items:center; justify-content:center; z-index:100; padding:14px}
+  .modal{background:var(--panel); border:1px solid var(--border); border-radius:14px; max-width:620px; width:100%; max-height:86vh; overflow:auto; padding:16px 18px}
+  .modal .mhead{display:flex; align-items:center; justify-content:space-between; gap:10px; border-bottom:1px solid #24304a; padding-bottom:10px; margin-bottom:12px}
+  .modal .mhead h3{font-size:15px}
+  .mclose{background:transparent; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:4px 8px}
+  .mclose:hover{color:#fff}
+  .stmodal-top{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:4px; flex-wrap:wrap}
+  .hteam{display:flex; align-items:center; gap:7px; font-weight:700; font-size:13px}
+  .hteam img{width:20px; height:20px; object-fit:contain}
+  .stats-row{display:grid; grid-template-columns:1fr 130px 1fr; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid #1f2b44; font-size:13.5px}
+  .stats-row.hdr{border-bottom:1px solid #2b3a58}
+  .stats-row .sn{text-align:center; color:var(--muted); font-size:10.5px; text-transform:uppercase; letter-spacing:.4px}
+  .stats-row .hm{font-weight:800; color:#fff}
+  .stats-row .am{font-weight:800; color:#fff; text-align:right}
   @media(max-width:700px){
     .match{grid-template-columns:1fr; text-align:center; gap:4px}
     .match .t, .match .t.home{justify-content:center}
@@ -111,6 +127,16 @@
   La Bota de Oro se calcula aquí con los goles de liga (coeficiente ×1,5 para las 5 grandes ligas; ×1 para Eredivisie).
 </footer>
 
+<div class="modal-overlay" id="statsModal" onclick="cerrarStats()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mhead">
+      <h3>📊 Estadísticas del partido</h3>
+      <button class="mclose" title="Cerrar" onclick="cerrarStats()">✕</button>
+    </div>
+    <div id="statsBody"></div>
+  </div>
+</div>
+
 <script>
 "use strict";
 const SEASON = 2026;
@@ -131,6 +157,7 @@ const API = {
   standings: s => `https://site.api.espn.com/apis/v2/sports/soccer/${s}/standings`,
   scoreboard: (s, y) => `https://site.api.espn.com/apis/site/v2/sports/soccer/${s}/scoreboard?dates=${y}&limit=500`,
   leaders: s => `https://sports.core.api.espn.com/v2/sports/soccer/leagues/${s}/seasons/${SEASON}/types/1/leaders`,
+  summary: (s, eid) => `https://site.api.espn.com/apis/site/v2/sports/soccer/${s}/summary?event=${eid}`,
 };
 
 async function jget(url){
@@ -335,7 +362,7 @@ function renderTable(L, model){
 }
 
 /* ---------- Render: partidos ---------- */
-function matchHTML(e, mostrarStage){
+function matchHTML(e, mostrarStage, conStats){
   const home = e.c.find(x => x.ha === "home") || e.c[0];
   const away = e.c.find(x => x.ha === "away") || e.c[1];
   const esPre = e.st !== "post";
@@ -347,13 +374,92 @@ function matchHTML(e, mostrarStage){
     scoreTxt = `${esc(home.sc)} - ${esc(away.sc)}`;
   }
   const stage = (mostrarStage && e.stage) ? `<span class="stage">${esc(e.stage)}</span>` : "";
-  return `<div class="match">
-    <div class="date">${fmtDate(e.d)}${stage}</div>
+  const clickable = conStats && !esPre;
+  const clicCls = clickable ? " clic" : "";
+  const clicAttr = clickable ? ` onclick="verStats('${e.id}')"` : "";
+  const hint = clickable ? ` <span title="Ver estadísticas" style="color:var(--accent)">📊</span>` : "";
+  return `<div class="match${clicCls}"${clicAttr}>
+    <div class="date">${fmtDate(e.d)}${stage}${hint}</div>
     ${teamCell(home, "home")}
     <div class="${scoreCls}">${scoreTxt}</div>
     ${teamCell(away, "away")}
     <div class="date">${esPre ? esc(e.det || "") : esc(e.det || "Final")}</div>
   </div>`;
+}
+
+/* ---------- Estadísticas del partido ---------- */
+const STAT_TRANS = {
+  "possession":"Posesión", "shots on goal":"Tiros a puerta", "shots":"Tiros",
+  "total shots":"Tiros totales", "corner kicks":"Córners", "fouls":"Faltas",
+  "offsides":"Fuera de juego", "yellow cards":"Tarjetas amarillas",
+  "red cards":"Tarjetas rojas", "saves":"Paradas", "passes":"Pases",
+  "accurate passes":"Pases precisos", "hit woodwork":"Al palo", "clearances":"Despejes",
+  "blocked shots":"Tiros bloqueados", "goal kicks":"Saques de puerta",
+  "throw ins":"Saques de banda", "crosses":"Centros", "tackles":"Entradas",
+  "interceptions":"Intercepciones", "blocks":"Bloqueos", "attempts on goal":"Tiros a puerta",
+  "attempts":"Tiros", "fast breaks":"Contraataques", "penalties":"Penaltis"
+};
+function trStat(name){ const k = name.toLowerCase().trim(); return STAT_TRANS[k] || name; }
+
+function cerrarStats(){
+  const m = document.getElementById("statsModal");
+  if(m) m.style.display = "none";
+}
+
+async function verStats(id){
+  const modal = document.getElementById("statsModal");
+  const body = document.getElementById("statsBody");
+  if(!modal || !body) return;
+  modal.style.display = "flex";
+  body.innerHTML = `<div class="loading"><div class="spinner"></div>Cargando estadísticas…</div>`;
+  const key = "fb_v1_stats_" + id;
+  try{
+    let d = cacheGet(key);
+    if(!d){
+      const L = LEAGUES.find(x => x.id === current);
+      const j = await jget(API.summary(L.slug, id));
+      const box = (j && j.boxscore) || {};
+      const comp = (j && j.header && j.header.competitions && j.header.competitions[0]) || {};
+      const sideMap = {};
+      (comp.competitors || []).forEach(c => {
+        sideMap[c.team.id] = { ha: c.homeAway, sc: c.score, n: c.team.displayName, lg: (c.team.logos && c.team.logos[0]) ? c.team.logos[0].href : null };
+      });
+      const tmp = (box.teams || []).map(t => {
+        const tm = t.team || {};
+        const s = sideMap[tm.id] || {};
+        const stats = {};
+        (t.statistics || []).forEach(x => { if(x && x.name) stats[x.name] = x.displayValue || x.value; });
+        return { n: s.n || tm.displayName || "—", lg: s.lg, sc: s.sc, ha: s.ha, stats };
+      });
+      let home = tmp.find(x => x.ha === "home");
+      let away = tmp.find(x => x.ha === "away");
+      if(tmp.length && (!home || !away)){ home = tmp[0]; away = tmp[1]; }
+      if(!home || !away) throw new Error("El partido no tiene estadísticas disponibles.");
+      const rows = [];
+      const seen = {};
+      const push = name => {
+        const k = String(name).replace(/\s+/g, " ").toLowerCase();
+        if(seen[k]) return;
+        seen[k] = 1;
+        rows.push([ String(name), home.stats[name] || "—", away.stats[name] || "—" ]);
+      };
+      Object.keys(home.stats).forEach(push);
+      Object.keys(away.stats).forEach(push);
+      d = { home: { n: home.n, lg: home.lg, sc: home.sc }, away: { n: away.n, lg: away.lg, sc: away.sc }, rows };
+      cacheSet(key, d);
+    }
+    const h = t => `<span class="hteam">${t.lg ? `<img src="${esc(t.lg)}" alt="" loading="lazy">` : ""}${esc(t.n)}</span>`;
+    body.innerHTML = `
+      <div class="stmodal-top">
+        ${h(d.home)}
+        <div style="font-size:19px;font-weight:800;color:#fff">${esc(d.home.sc || "—")} - ${esc(d.away.sc || "—")}</div>
+        ${h(d.away)}
+      </div>
+      <div class="stats-row hdr"><div class="hm">Local</div><div class="sn">Estadística</div><div class="am">Visitante</div></div>
+      ${d.rows.map(r => `<div class="stats-row"><div class="hm">${esc(r[1])}</div><div class="sn">${esc(trStat(r[0]))}</div><div class="am">${esc(r[2])}</div></div>`).join("")}`;
+  }catch(err){
+    body.innerHTML = `<div class="error">No se pudieron cargar las estadísticas de este partido.<br>${esc(err.message)}<br><button onclick="cerrarStats()">Cerrar</button></div>`;
+  }
 }
 
 let showCountResults = 20, showCountUpcoming = 20, monthFilter = "todos";
@@ -384,7 +490,7 @@ function renderResults(L, model){
   shown.forEach(e => {
     const day = fmtDate(e.d, false);
     if(day !== lastDay){ html += `<div class="group-title">${day}</div>`; lastDay = day; }
-    html += matchHTML(e, L.type === "ucl");
+    html += matchHTML(e, L.type === "ucl", true);
   });
   if(list.length > shown.length)
     html += `<div class="more"><button onclick="showCountResults+=30; render()">Mostrar más (${list.length - shown.length} restantes)</button></div>`;
