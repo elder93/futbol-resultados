@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0e1420">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Resultados de Fútbol">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.svg">
+<title>Fútbol Europeo 2026/27 — Resultados, Clasificaciones y Bota de Oro</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2248%22 fill=%22%23ffffff%22 stroke=%22%23111%22 stroke-width=%223%22/><text x=%2250%22 y=%2272%22 text-anchor=%22middle%22 font-size=%2260%22>⚽</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2248%22 fill=%22%23ffffff%22 stroke=%22%23111%22 stroke-width=%223%22/><text x=%2250%22 y=%2272%22 text-anchor=%22middle%22 font-size=%2260%22>⚽</text></svg>">
+<style>
+  :root{
+    --bg:#0e1420; --panel:#161e2e; --panel2:#1c2740; --border:#2a3550;
+    --text:#e8edf5; --muted:#93a1b8; --accent:#3b82f6; --gold:#f5c518;
+    --win:#22c55e; --draw:#94a3b8; --loss:#ef4444;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:var(--bg); color:var(--text); font-family:"Segoe UI",system-ui,Arial,sans-serif; font-size:14px}
+  header{background:linear-gradient(135deg,#101a2e,#1a2c52); border-bottom:1px solid #2a3550; padding:16px 20px; display:flex; flex-wrap:wrap; align-items:center; gap:14px}
+  header h1{font-size:20px; letter-spacing:.5px}
+  header h1 .ball{color:var(--gold)}
+  .season{background:var(--accent); color:#fff; font-size:12px; font-weight:700; padding:4px 10px; border-radius:20px}
+  .spacer{flex:1}
+  button{background:var(--panel2); color:var(--text); border:1px solid #33415c; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:13px}
+  button:hover{background:#25314e}
+  .status{font-size:12px; color:var(--muted)}
+  nav.tabs{display:flex; flex-wrap:wrap; gap:6px; padding:10px 16px; background:#121a2a; border-bottom:1px solid #24304a; position:sticky; top:0; z-index:5}
+  nav.tabs button{border-radius:20px; border:none; background:transparent; font-weight:600; color:var(--muted); padding:8px 16px}
+  nav.tabs button.active{background:var(--accent); color:#fff}
+  nav.tabs button:hover:not(.active){background:#1e2a44; color:#fff}
+  nav.sub{display:flex; flex-wrap:wrap; gap:6px; padding:10px 16px; background:#101827; border-bottom:1px solid #22304a}
+  nav.sub button{border-radius:8px; background:#182239; border:1px solid #2b3a58; color:var(--muted); font-weight:600}
+  nav.sub button.active{background:#2b4a86; color:#fff; border-color:#3b82f6}
+  main{padding:16px; max-width:1280px; margin:0 auto}
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:16px}
+  .card{background:var(--panel); border:1px solid #24304a; border-radius:12px; padding:12px 14px}
+  .card .v{font-size:22px; font-weight:800; color:#fff}
+  .card .k{font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin-top:2px}
+  table{width:100%; border-collapse:collapse; background:var(--panel); border-radius:12px; overflow:hidden; border:1px solid #24304a}
+  th{background:#1d2941; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); padding:9px 6px; text-align:center; position:sticky; top:0}
+  td{padding:8px 6px; text-align:center; border-top:1px solid #1f2b44; font-size:13px}
+  tr:hover td{background:#1a2438}
+  td.team{text-align:left; display:flex; align-items:center; gap:8px; font-weight:600}
+  td.team img{width:20px; height:20px; object-fit:contain}
+  .pos{font-weight:800; color:var(--muted); width:34px}
+  .zone{border-left:4px solid transparent}
+  .z-ucl{border-left-color:#22c55e}
+  .z-uel{border-left-color:#3b82f6}
+  .z-con{border-left-color:#a855f7}
+  .z-rel{border-left-color:#ef4444}
+  .legend{display:flex; flex-wrap:wrap; gap:14px; font-size:11px; color:var(--muted); margin:8px 2px 16px}
+  .legend i{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:middle}
+  .match{display:grid; grid-template-columns:110px 1fr 60px 1fr 90px; align-items:center; gap:8px; background:var(--panel); border:1px solid #24304a; border-radius:10px; padding:9px 12px; margin-bottom:7px}
+  .match .date{font-size:11px; color:var(--muted); text-align:center}
+  .match .t{display:flex; align-items:center; gap:7px; font-weight:600; min-width:0}
+  .match .t.home{justify-content:flex-end; text-align:right}
+  .match .t img{width:20px; height:20px; object-fit:contain}
+  .match .t span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .score{background:#0f1626; border:1px solid #2b3a58; border-radius:8px; font-weight:800; text-align:center; padding:5px 4px; font-size:14px}
+  .score.pending{font-weight:600; color:var(--muted); font-size:12px}
+  .score.live{color:#f87171; animation:pulse 1.2s infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  .group-title{font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; color:var(--accent); margin:16px 2px 8px}
+  .match .stage{font-size:10px; color:var(--muted); display:block}
+  .scorer{display:grid; grid-template-columns:34px 1fr 90px 60px; gap:8px; align-items:center; background:var(--panel); border:1px solid #24304a; border-radius:10px; padding:9px 12px; margin-bottom:7px}
+  .scorer .p{display:flex; align-items:center; gap:8px; font-weight:700}
+  .scorer .p img{width:22px; height:22px; object-fit:contain}
+  .scorer .num{font-weight:800; color:var(--gold); text-align:right}
+  .scorer .teamname{font-size:11px; color:var(--muted); font-weight:500}
+  .bar-wrap{height:8px; background:#111a2c; border-radius:6px; overflow:hidden; margin-top:4px}
+  .bar{height:100%; background:linear-gradient(90deg,#3b82f6,#60a5fa); border-radius:6px}
+  .bar.gold{background:linear-gradient(90deg,#f5c518,#fbbf24)}
+  .more{text-align:center; margin:14px 0}
+  .section-note{font-size:12px; color:var(--muted); margin:6px 2px 14px; line-height:1.5}
+  .loading{text-align:center; padding:60px 0; color:var(--muted)}
+  .spinner{width:36px; height:36px; border:4px solid #24304a; border-top-color:var(--accent); border-radius:50%; margin:0 auto 12px; animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .error{background:#2a1620; border:1px solid #7f1d1d; color:#fca5a5; padding:14px; border-radius:10px; text-align:center}
+  .error button{margin-top:10px}
+  .gb-rules{background:#241f10; border:1px solid #6b5a12; color:#fde68a; border-radius:10px; padding:12px 14px; font-size:12.5px; line-height:1.6; margin-bottom:16px}
+  footer{text-align:center; color:var(--muted); font-size:11.5px; padding:24px 10px; border-top:1px solid #1e2a42; margin-top:30px}
+  @media(max-width:700px){
+    .match{grid-template-columns:1fr; text-align:center; gap:4px}
+    .match .t, .match .t.home{justify-content:center}
+    .match .date{order:-1}
+    td.team{font-size:12px}
+    .hide-sm{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="ball">⚽</span> Fútbol Europeo</h1>
+  <span class="season">Temporada 2026/27</span>
+  <span class="spacer"></span>
+  <span class="status" id="status">Datos en vivo (ESPN)</span>
+  <button onclick="hardRefresh()">⟳ Actualizar</button>
+</header>
+
+<nav class="tabs" id="tabs"></nav>
+<div id="subnav"></div>
+<main id="main"><div class="loading"><div class="spinner"></div>Cargando competiciones…</div></main>
+
+<footer>
+  Datos proporcionados por la API pública de ESPN · Puede haber un ligero retraso en los resultados en directo.<br>
+  La Bota de Oro se calcula aquí con los goles de liga (coeficiente ×1,5 para las 5 grandes ligas; ×1 para Eredivisie).
+</footer>
+
+<script>
+"use strict";
+const SEASON = 2026;
+
+const LEAGUES = [
+  { id:"laliga",      slug:"esp.1",          name:"LaLiga",         country:"España",        coef:1.5, type:"liga" },
+  { id:"seriea",      slug:"ita.1",          name:"Serie A",        country:"Italia",        coef:1.5, type:"liga" },
+  { id:"premier",     slug:"eng.1",          name:"Premier League", country:"Inglaterra",    coef:1.5, type:"liga" },
+  { id:"eredivisie",  slug:"ned.1",          name:"Eredivisie",     country:"Países Bajos",  coef:1.0, type:"liga" },
+  { id:"bundesliga",  slug:"ger.1",          name:"Bundesliga",     country:"Alemania",      coef:1.5, type:"liga" },
+  { id:"champions",   slug:"uefa.champions", name:"Champions League", country:"Europa",      coef:0,   type:"ucl" },
+];
+
+const TTL = 3 * 60 * 60 * 1000;
+
+/* ---------- API ---------- */
+const API = {
+  standings: s => `https://site.api.espn.com/apis/v2/sports/soccer/${s}/standings`,
+  scoreboard: (s, y) => `https://site.api.espn.com/apis/site/v2/sports/soccer/${s}/scoreboard?dates=${y}&limit=500`,
+  leaders: s => `https://sports.core.api.espn.com/v2/sports/soccer/leagues/${s}/seasons/${SEASON}/types/1/leaders`,
+};
+
+async function jget(url){
+  const r = await fetch(url, { cache: "no-store" });
+  if(!r.ok) throw new Error("HTTP " + r.status + " en " + url.split("?")[0]);
+  return r.json();
+}
+function cacheGet(k){
+  try{
+    const raw = localStorage.getItem(k);
+    if(!raw) return null;
+    const o = JSON.parse(raw);
+    return (Date.now() - o.t > TTL) ? null : o.d;
+  }catch(e){ return null; }
+}
+function cacheSet(k, d){
+  try{ localStorage.setItem(k, JSON.stringify({ t: Date.now(), d })); }
+  catch(e){ try{ localStorage.clear(); localStorage.setItem(k, JSON.stringify({ t: Date.now(), d })); }catch(_){} }
+}
+async function pool(tasks, n = 7){
+  const out = new Array(tasks.length); let i = 0;
+  await Promise.all(Array.from({ length: Math.min(n, tasks.length) }, async () => {
+    while(i < tasks.length){ const idx = i++; out[idx] = await tasks[idx](); }
+  }));
+  return out;
+}
+
+/* ---------- Datos ---------- */
+function parseStandings(j){
+  const out = [];
+  (j.children || []).forEach(child => {
+    const entries = (child.standings && child.standings.entries) || [];
+    entries.forEach(e => {
+      const st = {}; (e.stats || []).forEach(s => st[s.name] = s);
+      const t = e.team || {};
+      out.push({
+        rank: st.rank ? st.rank.value : out.length + 1,
+        id: t.id, name: t.displayName || t.name, ab: t.abbreviation,
+        logo: (t.logos && t.logos[0]) ? t.logos[0].href : null,
+        pj: st.gamesPlayed ? st.gamesPlayed.value : 0,
+        g: st.wins ? st.wins.value : 0,
+        e: st.ties ? st.ties.value : 0,
+        p: st.losses ? st.losses.value : 0,
+        gf: st.pointsFor ? st.pointsFor.value : 0,
+        gc: st.pointsAgainst ? st.pointsAgainst.value : 0,
+        dg: st.pointDifferential ? st.pointDifferential.displayValue : (st.pointsFor && st.pointsAgainst ? (st.pointsFor.value - st.pointsAgainst.value) : 0),
+        pts: st.points ? st.points.value : 0,
+        group: child.name || ""
+      });
+    });
+  });
+  out.sort((a, b) => a.rank - b.rank);
+  return out;
+}
+
+function compactEvent(e){
+  const c = (e.competitions || [])[0];
+  if(!c) return null;
+  const comp = (c.competitors || []).map(x => ({
+    id: x.team.id, n: x.team.displayName, ab: x.team.abbreviation,
+    lg: (x.team.logos && x.team.logos[0]) ? x.team.logos[0].href : null,
+    sc: x.score, ha: x.homeAway, w: x.winner
+  }));
+  return {
+    id: e.id, d: e.date,
+    st: e.status.type.state, nm: e.status.type.name,
+    det: e.status.type.shortDetail || e.status.type.detail,
+    stage: (c.notes && c.notes[0] && c.notes[0].headline) || "",
+    c: comp
+  };
+}
+
+function catLeaders(j, cat){
+  const c = (j.categories || []).find(x => x.name === cat);
+  if(!c) return [];
+  return c.leaders.slice(0, 12).map(l => ({
+    v: l.value,
+    ar: l.athlete && l.athlete.$ref,
+    tr: l.team && l.team.$ref
+  }));
+}
+
+async function resolveNames(leaders){
+  const refs = [...new Set(leaders.filter(l => l.ar).map(l => l.ar))];
+  const map = {};
+  await pool(refs.map(ref => async () => {
+    try{
+      const a = await jget(ref.replace("http://", "https://"));
+      map[ref] = { name: a.displayName, id: a.id };
+    }catch(e){ map[ref] = { name: "—", id: null }; }
+  }), 7);
+  leaders.forEach(l => { const m = map[l.ar]; l.player = m ? m.name : "—"; l.pid = m ? m.id : null; });
+  return leaders;
+}
+
+async function loadLeague(L){
+  const key = "fb_v1_" + L.id;
+  const cached = cacheGet(key);
+  if(cached) return cached;
+
+  const [stJ, e26, e27, ldJ] = await Promise.all([
+    jget(API.standings(L.slug)),
+    jget(API.scoreboard(L.slug, 2026)),
+    jget(API.scoreboard(L.slug, 2027)),
+    jget(API.leaders(L.slug)),
+  ]);
+
+  const table = parseStandings(stJ);
+  const teamMap = {};
+  table.forEach(t => { if(t.id) teamMap[t.id] = { n: t.name, lg: t.logo, ab: t.ab }; });
+
+  const seen = new Set();
+  const events = [];
+  [...(e26.events || []), ...(e27.events || [])].forEach(e => {
+    if(!e.season || e.season.year !== SEASON || seen.has(e.id)) return;
+    seen.add(e.id);
+    const ce = compactEvent(e);
+    if(ce) events.push(ce);
+  });
+  events.sort((a, b) => new Date(a.d) - new Date(b.d));
+
+  let goals = catLeaders(ldJ, "goals");
+  let assists = catLeaders(ldJ, "assists");
+  await Promise.all([resolveNames(goals), resolveNames(assists)]);
+
+  leadersTeamInfo(goals, teamMap, L.slug);
+  leadersTeamInfo(assists, teamMap, L.slug);
+
+  const post = events.filter(e => e.st === "post");
+  const upcoming = events.filter(e => e.st !== "post");
+  const totalGoals = post.reduce((s, e) => s + e.c.reduce((a, x) => a + (parseInt(x.sc, 10) || 0), 0), 0);
+
+  const model = {
+    table, teamMap, events, post, upcoming, goals, assists,
+    stats: {
+      jugados: post.length,
+      pendientes: upcoming.length,
+      goles: totalGoals,
+      media: post.length ? (totalGoals / post.length) : 0,
+      max: goals[0] || null
+    }
+  };
+  cacheSet(key, model);
+  return model;
+}
+
+function leadersTeamInfo(list, teamMap, slug){
+  list.forEach(l => {
+    const m = /teams\/(\d+)/.exec(l.tr || "");
+    const tid = m ? m[1] : null;
+    const info = tid && teamMap[tid];
+    l.team = info ? info.n : (tid ? "Equipo " + tid : "—");
+    l.logo = info ? info.lg : null;
+  });
+}
+
+/* ---------- Utilidades UI ---------- */
+const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const DIAS = ["dom","lun","mar","mié","jue","vie","sáb"];
+function fmtDate(iso, conHora = true){
+  const d = new Date(iso);
+  const s = `${DIAS[d.getDay()]} ${String(d.getDate()).padStart(2,"0")} ${MESES[d.getMonth()]}`;
+  return conHora ? s + " · " + d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) : s;
+}
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c])); }
+function el(html){ const d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstElementChild; }
+
+function teamCell(t, align){
+  const logo = t.lg ? `<img src="${esc(t.lg)}" alt="" loading="lazy">` : "";
+  return `<span class="t ${align}">${align === "home" ? `<span>${esc(t.n)}</span>${logo}` : `${logo}<span>${esc(t.n)}</span>`}</span>`;
+}
+
+/* ---------- Render: tabla ---------- */
+function renderTable(L, model){
+  const zones = L.type === "ucl"
+    ? [["z-ucl", 8, "Clasificación directa a octavos"], ["z-uel", 24, "Dieciseisavos / playoffs"]]
+    : [["z-ucl", 4, "Champions (orientativo)"], ["z-uel", 6, "Europa (orientativo)"], ["z-rel", model.table.length - 2, "Descenso (orientativo)"]];
+
+  const rows = model.table.map(t => {
+    let z = "";
+    if(L.type === "ucl"){ z = t.rank <= 8 ? "z-ucl" : (t.rank <= 24 ? "z-uel" : "z-rel"); }
+    else { z = t.rank <= 4 ? "z-ucl" : (t.rank <= 6 ? "z-uel" : (t.rank >= model.table.length - 2 ? "z-rel" : "")); }
+    return `<tr>
+      <td class="pos zone ${z}">${t.rank}</td>
+      <td class="team">${t.lg ? `<img src="${esc(t.lg)}" alt="" loading="lazy">` : ""}${esc(t.name)}</td>
+      <td>${t.pj}</td><td>${t.g}</td><td>${t.e}</td><td>${t.p}</td>
+      <td class="hide-sm">${t.gf}</td><td class="hide-sm">${t.gc}</td>
+      <td>${esc(String(t.dg))}</td><td><b>${t.pts}</b></td>
+    </tr>`;
+  }).join("");
+
+  const legend = L.type === "ucl"
+    ? `<div class="legend"><span><i style="background:#22c55e"></i>Octavos (1-8)</span><span><i style="background:#3b82f6"></i>Dieciseisavos / playoffs (9-24)</span><span><i style="background:#ef4444"></i>Eliminados (25-36)</span></div>`
+    : `<div class="legend"><span><i style="background:#22c55e"></i>Champions</span><span><i style="background:#3b82f6"></i>Europa</span><span><i style="background:#ef4444"></i>Descenso</span> · zonas orientativas</div>`;
+
+  return `<h2 style="margin-bottom:10px">Clasificación — ${esc(L.name)}</h2>
+    ${legend}
+    <table><thead><tr>
+      <th>#</th><th style="text-align:left">Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th>
+      <th class="hide-sm">GF</th><th class="hide-sm">GC</th><th>DG</th><th>PTS</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+/* ---------- Render: partidos ---------- */
+function matchHTML(e, mostrarStage){
+  const home = e.c.find(x => x.ha === "home") || e.c[0];
+  const away = e.c.find(x => x.ha === "away") || e.c[1];
+  const esPre = e.st !== "post";
+  let scoreCls = "score", scoreTxt;
+  if(esPre){
+    scoreCls += e.st === "in" ? " live" : " pending";
+    scoreTxt = e.st === "in" ? `${esc(home.sc || 0)} - ${esc(away.sc || 0)}` : "vs";
+  }else{
+    scoreTxt = `${esc(home.sc)} - ${esc(away.sc)}`;
+  }
+  const stage = (mostrarStage && e.stage) ? `<span class="stage">${esc(e.stage)}</span>` : "";
+  return `<div class="match">
+    <div class="date">${fmtDate(e.d)}${stage}</div>
+    ${teamCell(home, "home")}
+    <div class="${scoreCls}">${scoreTxt}</div>
+    ${teamCell(away, "away")}
+    <div class="date">${esPre ? esc(e.det || "") : esc(e.det || "Final")}</div>
+  </div>`;
+}
+
+let showCountResults = 20, showCountUpcoming = 20, monthFilter = "todos";
+
+function renderResults(L, model){
+  let list = [...model.post].reverse();
+  const meses = [...new Set(model.post.map(e => {
+    const d = new Date(e.d); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+  }))];
+  const opts = [`<option value="todos">Todos los meses</option>`]
+    .concat(meses.map(m => {
+      const [y, mm] = m.split("-");
+      const label = `${MESES[parseInt(mm,10)-1]} ${y}`;
+      return `<option value="${m}" ${monthFilter === m ? "selected" : ""}>${label}</option>`;
+    })).join("");
+  if(monthFilter !== "todos") list = list.filter(e => {
+    const d = new Date(e.d); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}` === monthFilter;
+  });
+
+  const shown = list.slice(0, showCountResults);
+  let html = `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+    <h2>Resultados — ${esc(L.name)}</h2>
+    <select onchange="monthFilter=this.value; showCountResults=20; render()" style="background:#182239;color:#e8edf5;border:1px solid #2b3a58;padding:7px 10px;border-radius:8px">${opts}</select>
+  </div>`;
+  if(!shown.length) html += `<div class="section-note">No hay partidos jugados todavía en esta selección.</div>`;
+
+  let lastDay = "";
+  shown.forEach(e => {
+    const day = fmtDate(e.d, false);
+    if(day !== lastDay){ html += `<div class="group-title">${day}</div>`; lastDay = day; }
+    html += matchHTML(e, L.type === "ucl");
+  });
+  if(list.length > shown.length)
+    html += `<div class="more"><button onclick="showCountResults+=30; render()">Mostrar más (${list.length - shown.length} restantes)</button></div>`;
+  return html;
+}
+
+function renderUpcoming(L, model){
+  const list = model.upcoming;
+  const shown = list.slice(0, showCountUpcoming);
+  let html = `<h2 style="margin-bottom:10px">Próximos partidos — ${esc(L.name)}</h2>`;
+  if(!shown.length) html += `<div class="section-note">No hay partidos programados (terminó la temporada).</div>`;
+  let lastDay = "";
+  shown.forEach(e => {
+    const day = fmtDate(e.d, false);
+    if(day !== lastDay){ html += `<div class="group-title">${day}</div>`; lastDay = day; }
+    html += matchHTML(e, L.type === "ucl");
+  });
+  if(list.length > shown.length)
+    html += `<div class="more"><button onclick="showCountUpcoming+=30; render()">Mostrar más (${list.length - shown.length} restantes)</button></div>`;
+  return html;
+}
+
+function renderScorers(L, model){
+  const max = model.goals.length ? model.goals[0].v : 1;
+  const rows = model.goals.map((g, i) => `
+    <div class="scorer">
+      <div>${i + 1}</div>
+      <div>
+        <div class="p">${g.logo ? `<img src="${esc(g.logo)}" alt="">` : ""}<span>${esc(g.player)}</span></div>
+        <div class="teamname">${esc(g.team)}</div>
+        <div class="bar-wrap"><div class="bar" style="width:${Math.max(6, (g.v / max) * 100)}%"></div></div>
+      </div>
+      <div class="teamname">Asist: ${model.assists.find(a => a.player === g.player) ? model.assists.find(a => a.player === g.player).v : 0}</div>
+      <div class="num">${g.v} ⚽</div>
+    </div>`).join("");
+  return `<h2 style="margin-bottom:4px">Goleadores — ${esc(L.name)}</h2>
+    <div class="section-note">Top 12 de la competición (temporada en curso).</div>
+    ${rows || `<div class="section-note">Sin datos de goleadores.</div>`}`;
+}
+
+function renderAssists(L, model){
+  const max = model.assists.length ? model.assists[0].v : 1;
+  const rows = model.assists.map((g, i) => `
+    <div class="scorer">
+      <div>${i + 1}</div>
+      <div>
+        <div class="p">${g.logo ? `<img src="${esc(g.logo)}" alt="">` : ""}<span>${esc(g.player)}</span></div>
+        <div class="teamname">${esc(g.team)}</div>
+        <div class="bar-wrap"><div class="bar" style="width:${Math.max(6, (g.v / max) * 100)}%"></div></div>
+      </div>
+      <div class="teamname">Goles: ${model.goals.find(a => a.player === g.player) ? model.goals.find(a => a.player === g.player).v : 0}</div>
+      <div class="num">${g.v} 🅰️</div>
+    </div>`).join("");
+  return `<h2 style="margin-bottom:4px">Asistencias — ${esc(L.name)}</h2>
+    <div class="section-note">Top 12 de la competición (temporada en curso).</div>
+    ${rows || `<div class="section-note">Sin datos de asistencias.</div>`}`;
+}
+
+function statsCards(s){
+  return `<div class="cards">
+    <div class="card"><div class="v">${s.jugados}</div><div class="k">Partidos jugados</div></div>
+    <div class="card"><div class="v">${s.pendientes}</div><div class="k">Partidos pendientes</div></div>
+    <div class="card"><div class="v">${s.goles}</div><div class="k">Goles totales</div></div>
+    <div class="card"><div class="v">${s.media.toFixed(2)}</div><div class="k">Goles por partido</div></div>
+    <div class="card"><div class="v" style="font-size:15px">${s.max ? esc(s.max.player) : "—"}</div><div class="k">Máximo goleador (${s.max ? s.max.v : 0})</div></div>
+  </div>`;
+}
+
+/* ---------- Bota de Oro ---------- */
+async function loadGoldenBoot(){
+  const key = "fb_v1_goldenboot";
+  const cached = cacheGet(key);
+  if(cached) return cached;
+  const ligs = LEAGUES.filter(l => l.coef > 0);
+  const models = await Promise.all(ligs.map(L => loadLeague(L)));
+  const rows = [];
+  ligs.forEach((L, i) => {
+    models[i].goals.slice(0, 12).forEach(g => {
+      rows.push({
+        player: g.player, team: g.team, logo: g.logo,
+        goals: g.v, assists: (models[i].assists.find(a => a.player === g.player) || { v: 0 }).v,
+        league: L.name, coef: L.coef, pts: g.v * L.coef
+      });
+    });
+  });
+  rows.sort((a, b) => b.pts - a.pts || b.goals - a.goals);
+  const data = rows.slice(0, 30);
+  cacheSet(key, data);
+  return data;
+}
+
+async function renderGoldenBoot(){
+  main.innerHTML = `<div class="loading"><div class="spinner"></div>Calculando la lucha por la Bota de Oro…</div>`;
+  try{
+    const rows = await loadGoldenBoot();
+    const max = rows.length ? rows[0].pts : 1;
+    const table = rows.map((r, i) => `
+      <tr>
+        <td class="pos">${i + 1}</td>
+        <td class="team">${r.logo ? `<img src="${esc(r.logo)}" alt="">` : ""}${esc(r.player)}</td>
+        <td style="text-align:left">${esc(r.team)}</td>
+        <td>${esc(r.league)}</td>
+        <td><b>${r.goals}</b></td>
+        <td class="hide-sm">${r.assists}</td>
+        <td class="hide-sm">×${r.coef.toFixed(1)}</td>
+        <td><b style="color:var(--gold)">${r.pts.toFixed(1)}</b>
+          <div class="bar-wrap" style="width:70px;margin-left:auto"><div class="bar gold" style="width:${Math.max(4, (r.pts / max) * 100)}%"></div></div>
+        </td>
+      </tr>`).join("");
+
+    const top12 = rows.slice(0, 12).map((r, i) => `
+      <div class="scorer">
+        <div>${i + 1}</div>
+        <div>
+          <div class="p">${r.logo ? `<img src="${esc(r.logo)}" alt="">` : ""}<span>${esc(r.player)}</span></div>
+          <div class="teamname">${esc(r.team)} · ${esc(r.league)}</div>
+          <div class="bar-wrap"><div class="bar gold" style="width:${Math.max(5, (r.pts / max) * 100)}%"></div></div>
+        </div>
+        <div class="teamname">${r.goals} goles</div>
+        <div class="num">${r.pts.toFixed(1)}</div>
+      </div>`).join("");
+
+    main.innerHTML = `
+      <h2 style="margin-bottom:10px">🏆 Bota de Oro de Europa 2026/27</h2>
+      <div class="gb-rules">
+        <b>Cómo se calcula:</b> goles marcados en la liga nacional × coeficiente de la competición.
+        Las 5 grandes ligas (Inglaterra, España, Italia, Alemania — y Francia, no incluida aquí) valen <b>×1,5</b>;
+        el resto de ligas europeas (como la Eredivisie) valen <b>×1,0</b>.
+        Solo cuentan los goles de liga; los asistencias y los goles en copa o Champions no suman (se muestran como referencia).
+        <br>Clasificación provisional con los datos disponibles de la temporada en curso.
+      </div>
+      <table><thead><tr>
+        <th>#</th><th style="text-align:left">Jugador</th><th style="text-align:left">Club</th><th>Liga</th>
+        <th>Goles</th><th class="hide-sm">Asist.</th><th class="hide-sm">Coef.</th><th>Puntos</th>
+      </tr></thead><tbody>${table}</tbody></table>
+      <h2 style="margin:22px 0 8px">Top 12 de la carrera</h2>
+      ${top12}`;
+  }catch(err){
+    main.innerHTML = `<div class="error">No se pudo calcular la Bota de Oro.<br>${esc(err.message)}<br><button onclick="render()">Reintentar</button></div>`;
+  }
+}
+
+/* ---------- Navegación ---------- */
+const tabsEl = document.getElementById("tabs");
+const subnavEl = document.getElementById("subnav");
+const main = document.getElementById("main");
+const statusEl = document.getElementById("status");
+
+let current = "laliga";
+let sub = "tabla";
+const models = {};
+
+const SUBTABS = [
+  ["tabla", "📋 Tabla"],
+  ["resultados", "✅ Resultados"],
+  ["proximos", "📅 Próximos partidos"],
+  ["goleadores", "⚽ Goleadores"],
+  ["asistencias", "🅰️ Asistencias"],
+];
+
+function buildTabs(){
+  tabsEl.innerHTML = LEAGUES.map(L =>
+    `<button id="tab-${L.id}" class="${L.id === current ? "active" : ""}" onclick="switchTab('${L.id}')">${L.type === "ucl" ? "🏆 " : ""}${L.name}</button>`
+  ).join("") + `<button id="tab-boot" class="${current === "boot" ? "active" : ""}" onclick="switchTab('boot')">🥇 Bota de Oro</button>`;
+}
+
+function switchTab(id){
+  current = id;
+  sub = "tabla";
+  monthFilter = "todos"; showCountResults = 20; showCountUpcoming = 20;
+  buildTabs();
+  render();
+}
+
+function switchSub(s){
+  sub = s;
+  showCountResults = 20; showCountUpcoming = 20;
+  render();
+}
+
+function buildSubnav(hasStats){
+  if(current === "boot"){ subnavEl.innerHTML = ""; return; }
+  subnavEl.innerHTML = `<nav class="sub">` + SUBTABS.map(([id, label]) =>
+    `<button class="${sub === id ? "active" : ""}" onclick="switchSub('${id}')">${label}</button>`
+  ).join("") + `</nav>`;
+}
+
+async function render(){
+  buildSubnav();
+  if(current === "boot"){ return renderGoldenBoot(); }
+  const L = LEAGUES.find(x => x.id === current);
+
+  if(!models[L.id]){
+    main.innerHTML = `<div class="loading"><div class="spinner"></div>Cargando ${esc(L.name)}…</div>`;
+    try{
+      models[L.id] = await loadLeague(L);
+      statusEl.textContent = "Actualizado: " + new Date().toLocaleTimeString("es-ES");
+    }catch(err){
+      main.innerHTML = `<div class="error">No se pudieron cargar los datos de ${esc(L.name)}.<br>${esc(err.message)}<br><button onclick="render()">Reintentar</button></div>`;
+      return;
+    }
+  }
+  const model = models[L.id];
+  let html = statsCards(model.stats);
+  if(sub === "tabla") html += renderTable(L, model);
+  else if(sub === "resultados") html += renderResults(L, model);
+  else if(sub === "proximos") html += renderUpcoming(L, model);
+  else if(sub === "goleadores") html += renderScorers(L, model);
+  else if(sub === "asistencias") html += renderAssists(L, model);
+  main.innerHTML = html;
+}
+
+function hardRefresh(){
+  Object.keys(localStorage).filter(k => k.startsWith("fb_v1_")).forEach(k => localStorage.removeItem(k));
+  Object.keys(models).forEach(k => delete models[k]);
+  statusEl.textContent = "Actualizando…";
+  render();
+}
+
+buildTabs();
+render();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
