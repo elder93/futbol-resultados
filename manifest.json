@@ -1,7 +1,7 @@
 {
   "name": "Resultados de Fútbol",
   "short_name": "Fútbol",
-  "description": "Ver resultados de partidos de fútbol",
+  "description": "Resultados, clasificaciones y estadísticas de fútbol europeo",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -10,14 +10,15 @@
   "background_color": "#0f172a",
   "icons": [
     {
-      "src": "icon-192.svg",
+      "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "icon-512.svg",
+      "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

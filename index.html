@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Resultados de Fútbol">
 <link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="./icon-192.svg">
-<title>Fútbol Europeo 2026/27 — Resultados, Clasificaciones y Bota de Oro</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2248%22 fill=%22%23ffffff%22 stroke=%22%23111%22 stroke-width=%223%22/><text x=%2250%22 y=%2272%22 text-anchor=%22middle%22 font-size=%2260%22>⚽</text></svg>">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2248%22 fill=%22%23ffffff%22 stroke=%22%23111%22 stroke-width=%223%22/><text x=%2250%22 y=%2272%22 text-anchor=%22middle%22 font-size=%2260%22>⚽</text></svg>">
+<link rel="apple-touch-icon" href="./icon-192.png">
+  <title>Fútbol Europeo 2026/27 — Resultados, Clasificaciones y Bota de Oro</title>
+  <link rel="icon" type="image/png" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-512.png">
 <style>
   :root{
     --bg:#0e1420; --panel:#161e2e; --panel2:#1c2740; --border:#2a3550;
@@ -134,6 +134,16 @@
       <button class="mclose" title="Cerrar" onclick="cerrarStats()">✕</button>
     </div>
     <div id="statsBody"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="teamModal" onclick="cerrarEquipo()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mhead">
+      <h3>⚽ Partidos del equipo</h3>
+      <button class="mclose" title="Cerrar" onclick="cerrarEquipo()">✕</button>
+    </div>
+    <div id="teamBody"></div>
   </div>
 </div>
 
@@ -342,7 +352,7 @@ function renderTable(L, model){
     else { z = t.rank <= 4 ? "z-ucl" : (t.rank <= 6 ? "z-uel" : (t.rank >= model.table.length - 2 ? "z-rel" : "")); }
     return `<tr>
       <td class="pos zone ${z}">${t.rank}</td>
-      <td class="team">${t.lg ? `<img src="${esc(t.lg)}" alt="" loading="lazy">` : ""}${esc(t.name)}</td>
+      <td class="team" onclick="verEquipo('${t.id}')" style="cursor:pointer" title="Ver partidos del equipo">${t.lg ? `<img src="${esc(t.lg)}" alt="" loading="lazy">` : ""}${esc(t.name)}</td>
       <td>${t.pj}</td><td>${t.g}</td><td>${t.e}</td><td>${t.p}</td>
       <td class="hide-sm">${t.gf}</td><td class="hide-sm">${t.gc}</td>
       <td>${esc(String(t.dg))}</td><td><b>${t.pts}</b></td>
@@ -388,18 +398,38 @@ function matchHTML(e, mostrarStage, conStats){
 }
 
 /* ---------- Estadísticas del partido ---------- */
-const STAT_TRANS = {
-  "possession":"Posesión", "shots on goal":"Tiros a puerta", "shots":"Tiros",
-  "total shots":"Tiros totales", "corner kicks":"Córners", "fouls":"Faltas",
-  "offsides":"Fuera de juego", "yellow cards":"Tarjetas amarillas",
-  "red cards":"Tarjetas rojas", "saves":"Paradas", "passes":"Pases",
-  "accurate passes":"Pases precisos", "hit woodwork":"Al palo", "clearances":"Despejes",
-  "blocked shots":"Tiros bloqueados", "goal kicks":"Saques de puerta",
-  "throw ins":"Saques de banda", "crosses":"Centros", "tackles":"Entradas",
-  "interceptions":"Intercepciones", "blocks":"Bloqueos", "attempts on goal":"Tiros a puerta",
-  "attempts":"Tiros", "fast breaks":"Contraataques", "penalties":"Penaltis"
+const STAT_ES = {
+  possessionPct:["Posesión","%"], foulsCommitted:["Faltas",""], yellowCards:["Tarjetas amarillas",""],
+  redCards:["Tarjetas rojas",""], offsides:["Fueras de juego",""], wonCorners:["Córners",""],
+  saves:["Paradas",""], totalShots:["Tiros",""], shotsOnTarget:["Tiros a puerta",""],
+  shotPct:["Precisión de tiro","%"], penaltyKickGoals:["Goles de penalti",""],
+  penaltyKickShots:["Penaltis lanzados",""], accuratePasses:["Pases precisos",""],
+  totalPasses:["Pases",""], passPct:["Precisión de pase","%"], accurateCrosses:["Centros precisos",""],
+  totalCrosses:["Centros",""], crossPct:["Precisión de centro","%"],
+  totalLongBalls:["Balones largos",""], accurateLongBalls:["Balones largos precisos",""],
+  longballPct:["Precisión de balón largo","%"], blockedShots:["Tiros bloqueados",""],
+  effectiveTackles:["Entradas efectivas",""], totalTackles:["Entradas",""], tacklePct:["Precisión de entrada","%"],
+  interceptions:["Intercepciones",""], totalClearance:["Despejes",""],
+  attempts:["Intentos",""], onTarget:["Al arco",""], goals:["Goles",""]
 };
-function trStat(name){ const k = name.toLowerCase().trim(); return STAT_TRANS[k] || name; }
+const STAT_KEYS = [
+  ["possessionPct"],["totalShots"],["shotsOnTarget"],["shotPct"],["wonCorners"],["foulsCommitted"],
+  ["offsides"],["yellowCards"],["redCards"],["saves"],["totalPasses"],["accuratePasses"],["passPct"],
+  ["totalCrosses"],["accurateCrosses"],["totalTackles"],["effectiveTackles"],["interceptions"],
+  ["blockedShots"],["totalClearance"],["totalLongBalls"],["accurateLongBalls"],["penaltyKickShots"],
+  ["penaltyKickGoals"]
+];
+const STAT_PCT_FRAC = new Set(["shotPct","passPct","crossPct","longballPct","tacklePct"]);
+
+function fmtStat(name, val){
+  if(val == null || val === "") return "—";
+  let n = Number(val);
+  if(isNaN(n)) return String(val).replace(".", ",");
+  if(STAT_PCT_FRAC.has(name)) n = n * 100;
+  const s = (n % 1 === 0 ? String(Math.round(n)) : String(Math.round(n * 10) / 10)).replace(".", ",");
+  const suf = (STAT_ES[name] && STAT_ES[name][1] === "%") ? " %" : "";
+  return s + suf;
+}
 
 function cerrarStats(){
   const m = document.getElementById("statsModal");
@@ -412,7 +442,7 @@ async function verStats(id){
   if(!modal || !body) return;
   modal.style.display = "flex";
   body.innerHTML = `<div class="loading"><div class="spinner"></div>Cargando estadísticas…</div>`;
-  const key = "fb_v1_stats_" + id;
+  const key = "fb_v2_stats_" + id;
   try{
     let d = cacheGet(key);
     if(!d){
@@ -424,12 +454,15 @@ async function verStats(id){
       (comp.competitors || []).forEach(c => {
         sideMap[c.team.id] = { ha: c.homeAway, sc: c.score, n: c.team.displayName, lg: (c.team.logos && c.team.logos[0]) ? c.team.logos[0].href : null };
       });
+      const parseStats = t => {
+        const o = {};
+        (t.statistics || []).forEach(x => { if(x && x.name) o[x.name] = (x.value != null && x.value !== "") ? x.value : x.displayValue; });
+        return o;
+      };
       const tmp = (box.teams || []).map(t => {
         const tm = t.team || {};
         const s = sideMap[tm.id] || {};
-        const stats = {};
-        (t.statistics || []).forEach(x => { if(x && x.name) stats[x.name] = x.displayValue || x.value; });
-        return { n: s.n || tm.displayName || "—", lg: s.lg, sc: s.sc, ha: s.ha, stats };
+        return { n: s.n || tm.displayName || "—", lg: s.lg, sc: s.sc, ha: s.ha, stats: parseStats(t) };
       });
       let home = tmp.find(x => x.ha === "home");
       let away = tmp.find(x => x.ha === "away");
@@ -437,14 +470,15 @@ async function verStats(id){
       if(!home || !away) throw new Error("El partido no tiene estadísticas disponibles.");
       const rows = [];
       const seen = {};
-      const push = name => {
-        const k = String(name).replace(/\s+/g, " ").toLowerCase();
-        if(seen[k]) return;
-        seen[k] = 1;
-        rows.push([ String(name), home.stats[name] || "—", away.stats[name] || "—" ]);
+      const add = k => {
+        const lbl = (STAT_ES[k] && STAT_ES[k][0]) || k;
+        if(seen[lbl]) return;
+        seen[lbl] = 1;
+        rows.push([ lbl, fmtStat(k, home.stats[k]), fmtStat(k, away.stats[k]) ]);
       };
-      Object.keys(home.stats).forEach(push);
-      Object.keys(away.stats).forEach(push);
+      STAT_KEYS.forEach(([k]) => add(k));
+      Object.keys(home.stats).forEach(add);
+      Object.keys(away.stats).forEach(k => { if(home.stats[k] == null) add(k); });
       d = { home: { n: home.n, lg: home.lg, sc: home.sc }, away: { n: away.n, lg: away.lg, sc: away.sc }, rows };
       cacheSet(key, d);
     }
@@ -456,10 +490,50 @@ async function verStats(id){
         ${h(d.away)}
       </div>
       <div class="stats-row hdr"><div class="hm">Local</div><div class="sn">Estadística</div><div class="am">Visitante</div></div>
-      ${d.rows.map(r => `<div class="stats-row"><div class="hm">${esc(r[1])}</div><div class="sn">${esc(trStat(r[0]))}</div><div class="am">${esc(r[2])}</div></div>`).join("")}`;
+      ${d.rows.map(r => `<div class="stats-row"><div class="hm">${esc(r[1])}</div><div class="sn">${esc(r[0])}</div><div class="am">${esc(r[2])}</div></div>`).join("")}`;
   }catch(err){
     body.innerHTML = `<div class="error">No se pudieron cargar las estadísticas de este partido.<br>${esc(err.message)}<br><button onclick="cerrarStats()">Cerrar</button></div>`;
   }
+}
+
+/* ---------- Partidos de un equipo ---------- */
+function cerrarEquipo(){
+  const m = document.getElementById("teamModal");
+  if(m) m.style.display = "none";
+}
+
+function verEquipo(teamId){
+  const modal = document.getElementById("teamModal");
+  const body = document.getElementById("teamBody");
+  if(!modal || !body) return;
+  modal.style.display = "flex";
+  const L = LEAGUES.find(x => x.id === current);
+  const model = models[L.id];
+  if(!model){
+    body.innerHTML = `<div class="error">Carga la clasificación primero.<br><button onclick="cerrarEquipo()">Cerrar</button></div>`;
+    return;
+  }
+  const id = String(teamId);
+  const info = model.teamMap && model.teamMap[id];
+  const matches = model.events.filter(e => (e.c || []).some(x => String(x.id) === id));
+  const up = matches.filter(e => e.st !== "post").sort((a, b) => new Date(a.d) - new Date(b.d));
+  const post = matches.filter(e => e.st === "post").sort((a, b) => new Date(b.d) - new Date(a.d));
+  let html = `<div class="stmodal-top" style="justify-content:flex-start">
+      ${info && info.lg ? `<img src="${esc(info.lg)}" alt="" style="width:24px;height:24px">` : ""}
+      <h3 style="font-size:16px">${esc(info ? info.n : "Equipo")}</h3>
+      <span style="font-size:12px;color:var(--muted);margin-left:auto">${esc(L.name)}</span>
+    </div>`;
+  html += `<div class="group-title">📅 Partidos por jugar (${up.length})</div>`;
+  html += up.length
+    ? up.map(m => matchHTML(m, L.type === "ucl")).join("")
+    : `<div class="section-note">Sin partidos por jugar.</div>`;
+  html += `<div class="group-title">✅ Resultados (${post.length})</div>`;
+  html += post.length
+    ? post.slice(0, 20).map(m => matchHTML(m, L.type === "ucl", true)).join("")
+    : `<div class="section-note">Sin resultados todavía.</div>`;
+  if(post.length > 20)
+    html += `<div class="more">Mostrando los últimos 20 resultados.</div>`;
+  body.innerHTML = html;
 }
 
 let showCountResults = 20, showCountUpcoming = 20, monthFilter = "todos";
