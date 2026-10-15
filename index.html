@@ -157,6 +157,7 @@ const LEAGUES = [
   { id:"premier",     slug:"eng.1",          name:"Premier League", country:"Inglaterra",    coef:1.5, type:"liga" },
   { id:"eredivisie",  slug:"ned.1",          name:"Eredivisie",     country:"Países Bajos",  coef:1.0, type:"liga" },
   { id:"bundesliga",  slug:"ger.1",          name:"Bundesliga",     country:"Alemania",      coef:1.5, type:"liga" },
+  { id:"ligue1",      slug:"fra.1",          name:"Ligue 1",        country:"Francia",       coef:1.5, type:"liga" },
   { id:"champions",   slug:"uefa.champions", name:"Champions League", country:"Europa",      coef:0,   type:"ucl" },
 ];
 
@@ -691,7 +692,7 @@ async function renderGoldenBoot(){
       <h2 style="margin-bottom:10px">🏆 Bota de Oro de Europa 2026/27</h2>
       <div class="gb-rules">
         <b>Cómo se calcula:</b> goles marcados en la liga nacional × coeficiente de la competición.
-        Las 5 grandes ligas (Inglaterra, España, Italia, Alemania — y Francia, no incluida aquí) valen <b>×1,5</b>;
+        Las 5 grandes ligas (Inglaterra, España, Italia, Alemania y Francia) valen <b>×1,5</b>;
         el resto de ligas europeas (como la Eredivisie) valen <b>×1,0</b>.
         Solo cuentan los goles de liga; los asistencias y los goles en copa o Champions no suman (se muestran como referencia).
         <br>Clasificación provisional con los datos disponibles de la temporada en curso.
